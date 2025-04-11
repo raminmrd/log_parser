@@ -1,0 +1,24 @@
+This is a test log file with various JSON structures.
+
+{"event": "simple", "data": "value1"}
+{"event": "nested", "data": {"inner": {"value": 42}}}
+{"event": "array", "items": [1, 2, 3]}
+{"event": "complex", "data": {"nested": {"array": [{"a": 1}, {"b": 2}]}}}
+
+Multiple objects on one line:
+{"event": "multi1", "data": "value1"} {"event": "multi2", "data": "value2"}
+
+Nested with special characters:
+{"event": "special", "text": "line\nbreak", "unicode": "你好"}
+
+Invalid JSON that should be skipped:
+{invalid json}
+{missing closing brace
+{"missing": "event key"}
+
+Multiple levels of nesting:
+{"event": "deep", "level1": {"level2": {"level3": {"value": "deep"}}}}
+
+Mixed content with valid JSON:
+Some text before {"event": "mixed1", "data": "value1"} and after
+More text {"event": "mixed2", "data": "value2"} end 

@@ -1,22 +1,22 @@
 # Log Parser
 
-A Python tool for parsing JSON-like log files into pandas DataFrames. The parser can handle complex JSON structures, nested objects, and various edge cases.
+A Python utility for parsing log files containing JSON objects with event data. The parser extracts JSON objects from log files and converts them into a pandas DataFrame for easy analysis.
 
 ## Features
 
-- Parses JSON objects from log files
+- Extracts JSON objects from log files, even when embedded in other text
 - Handles nested JSON structures
-- Supports special characters and Unicode
-- Skips invalid JSON entries
-- Requires 'event' key in JSON objects
-- Converts results to pandas DataFrame
+- Validates JSON objects and requires an "event" key
+- Converts valid JSON objects into a pandas DataFrame
+- Debug mode for detailed parsing information
+- Tracks skipped objects and parsing errors
 
 ## Installation
 
-1. Clone the repository:
+1. Clone this repository:
 ```bash
-git clone https://github.com/raminmrd/log_parser.git
-cd log_parser
+git clone https://github.com/yourusername/log-parser.git
+cd log-parser
 ```
 
 2. Install dependencies:
@@ -26,43 +26,58 @@ pip install -r requirements.txt
 
 ## Usage
 
+### Basic Usage
+
 ```python
 from log_parser import LogParser
 
 # Create a parser instance
-parser = LogParser(debug=True)  # Set debug=True to see detailed parsing information
+parser = LogParser(debug=False)
 
-# Parse a log file
+# Parse a log file and get a DataFrame
 df = parser.parse_log_file('your_log_file.log')
 
 # Work with the DataFrame
-print(df)  # View all data
-print(df['event'].unique())  # See all unique event types
-print(df[df['event'] == 'login'])  # Filter by event type
+print(df.head())
+print(df['event'].unique())
 ```
 
-## Example Log File Format
+### Debug Mode
 
-The parser expects JSON objects in the log file, each containing an 'event' key:
+Enable debug mode to see detailed information about the parsing process:
 
-```text
-{"event": "login", "user": "test1", "timestamp": "2024-03-20"}
-{"event": "nested", "data": {"inner": {"value": 42}}}
-{"event": "array", "items": [1, 2, 3]}
+```python
+parser = LogParser(debug=True)
+df = parser.parse_log_file('your_log_file.log')
 ```
 
-## Testing
+### Expected Log File Format
 
-Run the test suite:
-```bash
-python -m unittest test_log_parser.py -v
+The log file can contain any text, but JSON objects should have an "event" key:
+
+```
+Some text before the JSON
+{"event": "user_login", "timestamp": "2024-03-20", "user_id": 123}
+More text here
+{"event": "page_view", "page": "/home", "user_id": 123}
 ```
 
-## Notes
+## Error Handling
 
-- Each JSON object must have an 'event' key
-- Invalid JSON entries are skipped
-- Objects without 'event' key are skipped
-- Supports nested JSON structures
-- Handles special characters and Unicode
-- Works with large numbers and scientific notation 
+The parser handles several types of errors:
+
+- FileNotFoundError: When the log file doesn't exist
+- pd.errors.EmptyDataError: When no valid JSON objects are found
+- JSONDecodeError: When invalid JSON is encountered (these objects are skipped)
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details. 
