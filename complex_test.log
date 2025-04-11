@@ -22,3 +22,6 @@ Multiple levels of nesting:
 Mixed content with valid JSON:
 Some text before {"event": "mixed1", "data": "value1"} and after
 More text {"event": "mixed2", "data": "value2"} end 
+
+Nested event key:
+{"serialized": {"lc": 1, "type": "constructor", "id": ["langchain", "chat_models"], "kwargs": {}}, "event": "LLM call"} 
