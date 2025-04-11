@@ -1,0 +1,13 @@
+This is a sample log file with some JSON-like entries.
+
+{"event": "user_login", "timestamp": "2024-03-20T10:00:00", "user_id": "123", "ip": "192.168.1.1"}
+{"event": "page_view", "timestamp": "2024-03-20T10:01:00", "page": "/home", "user_id": "123"}
+{"event": "error", "timestamp": "2024-03-20T10:02:00", "message": "Connection timeout", "code": 500}
+{"event": "user_logout", "timestamp": "2024-03-20T10:03:00", "user_id": "123", "session_duration": 180}
+
+Some nested JSON example:
+{"event": "nested_data", "timestamp": "2024-03-20T10:04:00", "data": {"inner": {"value": 42}}}
+
+Invalid JSON that should be skipped:
+{invalid json content}
+{missing event key} 
