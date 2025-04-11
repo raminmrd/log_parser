@@ -1,5 +1,6 @@
 import json
 import re
+import pandas as pd
 
 class LogParser:
     def __init__(self, debug=False):
@@ -56,57 +57,99 @@ class LogParser:
             if brace_count == 0:
                 # We found a complete JSON object
                 json_str = text[start:pos]
-                print(f"\nFound potential JSON string at position {start}: {json_str}")
+                if self.debug:
+                    print(f"\nFound potential JSON string at position {start}: {json_str}")
                 
                 try:
                     json_obj = json.loads(json_str)
                     if isinstance(json_obj, dict) and self._has_event_key(json_obj):
                         event_value = self._extract_event(json_obj)
-                        print(f"Valid JSON with event key: {event_value}")
+                        if self.debug:
+                            print(f"Valid JSON with event key: {event_value}")
                         json_objects.append(json_obj)
                     else:
-                        print(f"Skipping object without 'event' key: {json_str}")
+                        if self.debug:
+                            print(f"Skipping object without 'event' key: {json_str}")
                         self.skipped_objects.append(('no_event_key', json_str))
                 except json.JSONDecodeError as e:
-                    print(f"Invalid JSON: {e}")
-                    print(f"Problematic string: {json_str}")
+                    if self.debug:
+                        print(f"Invalid JSON: {e}")
+                        print(f"Problematic string: {json_str}")
                     self.skipped_objects.append(('invalid_json', json_str))
             else:
                 # Unmatched braces, move to next character
                 pos = start + 1
         
-        print(f"\nTotal JSON objects found: {len(json_objects)}")
-        print("\nFound objects:")
-        for i, obj in enumerate(json_objects):
-            print(f"\nObject {i+1}:")
-            print(json.dumps(obj, indent=2))
-        
-        if self.skipped_objects:
-            print("\nSkipped objects:")
-            for reason, obj in self.skipped_objects:
-                print(f"\nReason: {reason}")
-                print(f"Object: {obj}")
+        if self.debug:
+            print(f"\nTotal JSON objects found: {len(json_objects)}")
+            print("\nFound objects:")
+            for i, obj in enumerate(json_objects):
+                print(f"\nObject {i+1}:")
+                print(json.dumps(obj, indent=2))
+            
+            if self.skipped_objects:
+                print("\nSkipped objects:")
+                for reason, obj in self.skipped_objects:
+                    print(f"\nReason: {reason}")
+                    print(f"Object: {obj}")
         
         self.json_objects = json_objects  # Store for later use
         return json_objects
     
     def parse_log_file(self, file_path, debug=False):
-        """Parse a log file and return a list of JSON objects."""
+        """Parse a log file and return a pandas DataFrame containing the JSON objects.
+        
+        Args:
+            file_path (str): Path to the log file to parse
+            debug (bool): Whether to print debug information
+            
+        Returns:
+            pandas.DataFrame: DataFrame containing the parsed JSON objects
+            
+        Raises:
+            FileNotFoundError: If the log file doesn't exist
+            pd.errors.EmptyDataError: If no valid JSON objects were found
+            Exception: For other unexpected errors
+        """
         self.debug = debug
-        print(f"\nReading file: {file_path}")
+        if self.debug:
+            print(f"\nReading file: {file_path}")
         
         try:
             with open(file_path, 'r') as file:
                 content = file.read()
                 
-            print(f"File content length: {len(content)} characters")
-            print("\nFile content:")
-            print(content)
+            if self.debug:
+                print(f"File content length: {len(content)} characters")
+                print("\nFile content:")
+                print(content)
             
-            return self._find_json_objects(content)
+            json_objects = self._find_json_objects(content)
+            
+            if not json_objects:
+                raise pd.errors.EmptyDataError("No valid JSON objects found in the log file")
+            
+            # Convert JSON objects to DataFrame
+            df = pd.DataFrame(json_objects)
+            
+            if self.debug:
+                print("\nDataFrame shape:", df.shape)
+                print("\nDataFrame columns:", df.columns.tolist())
+                print("\nDataFrame preview:")
+                print(df)
+                
+                print("\nUnique values in each column:")
+                for col in df.columns:
+                    print(f"\n{col}:")
+                    print(df[col].unique())
+            
+            return df
             
         except FileNotFoundError:
             print(f"Error: File '{file_path}' not found")
+            raise
+        except pd.errors.EmptyDataError:
+            print("Error: No valid JSON objects found in the log file")
             raise
         except Exception as e:
             print(f"Error parsing log file: {str(e)}")
@@ -116,10 +159,12 @@ def main():
     """Example usage of the LogParser class."""
     try:
         parser = LogParser(debug=True)
-        json_objects = parser.parse_log_file('complex_test.log')
+        df = parser.parse_log_file('complex_test.log')
         print("\nSuccessfully parsed log file!")
-        print(f"Found {len(json_objects)} JSON objects with events")
-        return json_objects
+        print(f"Found {len(df)} JSON objects with events")
+        print("\nDataFrame preview:")
+        print(df)
+        return df
     except Exception as e:
         print(f"Failed to parse log file: {str(e)}")
         return None
