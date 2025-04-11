@@ -4,22 +4,30 @@ import re
 
 class LogParser:
     def __init__(self):
-        self.pattern = r'\{[^{}]*\}'
+        pass
     
-    def _extract_json_objects(self, text):
-        """Extract JSON-like objects from text using regex."""
-        matches = re.finditer(self.pattern, text)
+    def _find_json_objects(self, text):
+        """Find JSON objects in text by tracking opening and closing braces."""
         json_objects = []
+        stack = []
+        start = -1
         
-        for match in matches:
-            try:
-                # Try to parse the matched text as JSON
-                json_obj = json.loads(match.group())
-                if isinstance(json_obj, dict) and 'event' in json_obj:
-                    json_objects.append(json_obj)
-            except json.JSONDecodeError:
-                # Skip invalid JSON objects
-                continue
+        for i, char in enumerate(text):
+            if char == '{':
+                if not stack:
+                    start = i
+                stack.append(char)
+            elif char == '}':
+                if stack:
+                    stack.pop()
+                    if not stack:  # We've found a complete JSON object
+                        try:
+                            json_str = text[start:i+1]
+                            json_obj = json.loads(json_str)
+                            if isinstance(json_obj, dict) and 'event' in json_obj:
+                                json_objects.append(json_obj)
+                        except json.JSONDecodeError:
+                            continue
         
         return json_objects
     
@@ -28,7 +36,7 @@ class LogParser:
         with open(file_path, 'r') as file:
             content = file.read()
         
-        json_objects = self._extract_json_objects(content)
+        json_objects = self._find_json_objects(content)
         return pd.DataFrame(json_objects)
 
 # Example usage
